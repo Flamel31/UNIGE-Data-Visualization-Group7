@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <title>Employees working from home</title>    
+	<!-- JS -->
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+	<script src="js/d3-sankey.min.js"></script>
+	<script src="js/utility.js"></script>
+	<!-- CSS -->
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
+	<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+
+<body>
+	<nav class="blue darken-1">
+		<div class="nav-wrapper">
+			<a href="index.html" class="brand-logo">Group 7</a>
+			<a href="#" data-target="mobile-demo" class="sidenav-trigger"><i class="material-icons">menu</i></a>
+			<ul id="nav-mobile" class="right hide-on-med-and-down">
+				<li class="active"><a href="alluvial.html">Remote work</a></li>
+				<li><a href="linechart.html">Job starters and leavers</a></li>
+				<li><a href="barchart.html">Unemployment rates</a></li>
+			</ul>
+		</div>
+	</nav>
+	
+	<ul id="mobile-demo" class="sidenav">
+		<li><a href="alluvial.html">Remote work</a></li>
+		<li><a href="linechart.html">Job starters and leavers</a></li>
+		<li><a href="barchart.html">Unemployment rates</a></li>
+	</ul>
+	<h2>Employees working from home</h2>
+	<main class="container">
+		<div class="row">
+			<div class="input-field col s12 m6">
+				<select id="years">
+					<option value="2020" selected>2020</option>
+					<option value="2019">2019</option>
+					<option value="2018">2018</option>
+					<option value="2017">2017</option>
+					<option value="2016">2016</option>
+					<option value="2015">2015</option>
+					<option value="2014">2014</option>
+					<option value="2013">2013</option>
+					<option value="2012">2012</option>
+					<option value="2011">2011</option>
+					<option value="2010">2010</option>
+					<option value="2009">2009</option>
+					<option value="2008">2008</option>
+					<option value="2007">2007</option>
+					<option value="2006">2006</option>
+					<option value="2005">2005</option>
+				</select>
+				<label>Choose a year</label>
+			</div>
+
+			<div class="input-field col s12 m6">
+				<select multiple id="countries">
+					<option value="AT">AT</option>
+					<option value="BE">BE</option>
+					<option value="BG">BG</option>
+					<option value="CH">CH</option>
+					<option value="CY">CY</option>
+					<option value="CZ">CZ</option>
+					<option value="DE" selected>DE</option>
+					<option value="DK">DK</option>
+					<option value="EE">EE</option>
+					<option value="EL">EL</option>
+					<option value="ES" selected>ES</option>
+					<option value="FI">FI</option>
+					<option value="FR" selected>FR</option>
+					<option value="HR">HR</option>
+					<option value="HU">HU</option>
+					<option value="IE">IE</option>
+					<option value="IS">IS</option>
+					<option value="IT" selected>IT</option>
+					<option value="LT">LT</option>
+					<option value="LU">LU</option>
+					<option value="LV">LV</option>
+					<option value="ME">ME</option>
+					<option value="MK">MK</option>
+					<option value="MT">MT</option>
+					<option value="NL">NL</option>
+					<option value="NO">NO</option>
+					<option value="PL">PL</option>
+					<option value="PT">PT</option>
+					<option value="RO">RO</option>
+					<option value="RS">RS</option>
+					<option value="SE">SE</option>
+					<option value="SI">SI</option>
+					<option value="SK">SK</option>
+					<option value="TR">TR</option>
+					<option value="UK">UK</option>
+				</select>
+				<label>Choose countries</label>
+			</div>
+			<div class="col s12" id="svgcontainer"></div>
+		</div>
+		<div class="row">
+			<div class="col s12">Source data: <a href="https://ec.europa.eu/eurostat/databrowser/bookmark/5e77054c-1862-40f6-b3c6-cda74a49fc4c?lang=en">Eurostat link</a></div>
+		</div>
+	</main>
+    <script type="text/javascript">
+		// svg width and height
+        var w = 800, h = 550;
+        // set the dimensions with respect to the margins of the graph
+        var margin = { top: 20, right: 10, bottom: 10, left: 10 };
+        var width = w - margin.left - margin.right, height = h - margin.top - margin.bottom;
+		// materialize instances for selectors
+		var countries_instance, year_instance;
+		var node_categories = [{name:"Countries"},{name:"Age range"},{name:"Frequency"}];
+		var frequencies_labels = ["SMT","USU"];
+		
+		// append the svg object to the body of the page
+        var svg = d3.select("#svgcontainer")
+            .append("svg")
+			.attr("width","100%")
+            .attr("viewBox", `0 0 ${w} ${h}`)
+            .append("g")
+            .attr("transform", `translate(${margin.left},${margin.top})`)
+			.attr("class", "sankey");
+		var svg_nodes_categories = svg.append("g")
+			.attr("class","node_categories")
+			.attr("transform", `translate(0,${-margin.top})`);
+		var svg_links = svg.append("g")
+			.attr("class","links");
+		var svg_nodes = svg.append("g")
+			.attr("class","nodes");
+		// Tooltip for the links
+		var tooltip = d3.select("#svgcontainer")
+			.append("div")
+			.attr("class", "tooltip");
+		
+		// Set the sankey diagram properties
+		var sankey = d3.sankey()
+			.nodeWidth(30)
+			.size([width, height])
+			.nodeId(d => d.name)
+			.nodeSort(function(a,b){
+				return b.value - a.value;
+			});
+
+		function updateGraph(){
+			var year = year_instance.getSelectedValues()[0];
+			var countries = countries_instance.getSelectedValues();
+			drawGraph(year, countries);
+		}
+
+        function drawGraph(year, countries) {
+			if(countries.length == 0){
+				svg_links.selectChildren().remove()
+				svg_nodes.selectChildren().remove()
+				svg_nodes_categories.selectChildren().remove()
+				svg_nodes_categories.append("text")
+					.text("There is no bug here! Please select a country to visualize the graph.")
+					.attr("text-anchor","middle")
+					.attr("x", width/2)
+					.attr("y", height/4);
+				return;
+			}
+			// Request the file
+            d3.csv("csv/smartworking_f.csv", d3.autoType).then(function (dataset) {
+				// Set up graph for alluvial
+				var graph = {"nodes" : [], "links" : []};
+				// Filter the datasets, keep only the selected country and year
+                var data = d3.filter(dataset, function (d) { 
+					if(d.time == year && countries.includes(d.geo)) 
+						return d; 
+				});
+				
+				// Add 1 node for each country
+				Array.from(d3.rollup(data, v=>1 ,d => d.geo).keys()).forEach(function(d){
+					graph.nodes.push({ "name": d });
+				});
+				// Add 1 node for each age label
+				Array.from(d3.rollup(data, v=>1 ,d => d.age).keys()).forEach(function(d){
+					graph.nodes.push({ "name": d });
+				});
+				// Add 1 node for each freq label
+				Array.from(d3.rollup(data, v=>1 ,d => d.freq).keys()).forEach(function(d){
+					graph.nodes.push({ "name": d });
+				});
+		
+				// For each row add 2 links
+				data.forEach(function (d) {
+					// Add Country -> Age link
+					graph.links.push({ "source": d.geo,
+						"target": d.age,
+						"value": d.value });
+					// Add Age -> Freq link
+					graph.links.push({ "source": d.age,
+						"target": d.freq,
+						"value": d.value });
+				});	
+				
+				// Group links with the same source and target
+				groupped_links = d3.group(graph.links, d=>d.source, d=>d.target)
+				graph.links = []
+				for([source,map] of groupped_links){
+					for([target,values] of map){
+						graph.links.push({ "source": source,
+							"target": target,
+							"value": d3.sum(values, d => d.value)});
+					}
+				}
+				
+				var color = d3.scaleOrdinal()
+					.domain(d3.map(graph.nodes, d=>d.name))
+					.range(d3.schemeSet1);
+				
+				// Init graph nodes and links
+				graph = sankey(graph);				
+				
+				// add in the links
+				svg_links.selectAll(".link")
+					.data(graph.links)
+					.join("path")
+					.attr("class", "link")
+					.attr("d", d3.sankeyLinkHorizontal())					
+					.attr("sourceNode", d => d.source.name)
+					.attr("stroke-width",  d => d.width)
+					.attr("stroke", d => color(d.source.name))
+					.on("mouseover", function(event,d) {
+						var selected = d3.select(this).attr("sourceNode");
+						tooltip.html(generateHTMLTooltip(data,selected,countries.includes(selected)));
+						tooltip.style("border-color", d => d3.rgb(color(selected)).darker(2));
+						tooltip.style("display", "block");
+						// Change opacity of all the other links
+						svg_links.selectAll(".link").style("stroke-opacity",".2");
+						// Change opacity of all the links selected
+						svg_links.selectAll(".link[sourceNode='"+selected+"']").style("stroke-opacity","1");
+						// Sort the links
+						svg_links.selectAll(".link").sort(function (a, b) { 
+							if (a.source.name != selected) return -1;
+							else return 1;   
+						});
+					})
+					.on("mousemove", function(event) {
+						// Move tooltip
+						tooltip.style("top", (event.pageY+10)+"px")
+							.style("left",(event.pageX+10)+"px");
+					})
+					.on("mouseleave", function() {
+						// Hide tooltip
+						tooltip.style("display", "none");
+						// Change opacity of all the links
+						svg_links.selectAll(".link")
+							.style("stroke-opacity",".6");
+					});
+					
+				// add the rectangles for the nodes
+				svg_nodes.selectAll(".node")
+					.data(graph.nodes)
+					.join("rect")
+					.attr("class", "node")
+					.attr("x", d => d.x0)
+					.attr("y", d => d.y0)
+					.attr("height", d => d.y1 - d.y0)
+					.attr("width", sankey.nodeWidth())
+					.style("fill", d => d.color=color(d.name))
+					.style("stroke", d => d3.rgb(d.color).darker(2));
+
+				// add in the title for the nodes
+				svg_nodes.selectAll("text")
+					.data(graph.nodes)
+					.join("text")
+					.attr("x", d => d.x0 - 6)
+					.attr("y", d => (d.y1 + d.y0) / 2)
+					.attr("dy", "0.35em")
+					.attr("text-anchor", "end")
+					.text(d => frequencies_labels.includes(d.name) ? toFullString.get(d.name) : d.name)
+					.filter(d => d.x0 < width / 2)
+					.attr("x", d => d.x1 + 6)
+					.attr("text-anchor", "start");
+					
+				// add in the categories for each node
+				graph.nodes.forEach(function(d){
+					node_categories[d.depth].x0 = d.x0;
+					node_categories[d.depth].x1 = d.x1;
+				});
+				
+				svg_nodes_categories.selectAll("text")
+					.data(node_categories)
+					.join("text")
+					.attr("x", d => d.x0 < width / 2 ? d.x0 : d.x1)
+					.attr("y", 12)
+					.text(d => d.name)
+					.attr("text-anchor", d => d.x0 < width / 2 ? "start" : "end");
+            });
+        }
+		
+		var generateHTMLTooltip = function(data,selected,isCountry){
+			// Show Tooltip
+			var html_text = "";
+			if(isCountry){
+				html_text+= "<b>Country:</b> "+toFullString.get(selected)+"<br>";
+				d3.filter(data, function(d){ if(d.geo == selected) return d }).forEach(function(d){
+					var diff_value = (d.value-d.previous_value).toFixed(1);
+					html_text += d.age + " : " + d.value + "% " + toFullString.get(d.freq).toLowerCase() + " (";
+					if(diff_value>=0) html_text += "+";
+					html_text += diff_value + "%)<br>";
+				});
+			}else{
+				html_text+= "<b>Age Category:</b> "+selected+"<br>";
+				d3.filter(data, function(d){ if(d.age == selected) return d }).forEach(function(d){
+					var diff_value = (d.value-d.previous_value).toFixed(1);
+					html_text += d.geo + " : " + d.value + "% " + toFullString.get(d.freq).toLowerCase() + " (";
+					if(diff_value>=0) html_text += "+";
+					html_text += diff_value + "%)<br>";
+				});
+			}
+
+			return html_text;
+		}
+		
+		// Materialize init of the select
+		document.addEventListener('DOMContentLoaded', function() {
+			M.Sidenav.init(document.querySelectorAll(".sidenav"));
+			// Change country 2 characters string with full length string
+			d3.select("#countries").selectAll("option").html(function(){ return toFullString.get(d3.select(this).attr("value"))});
+			// Init select for years
+			year_instance = M.FormSelect.init(document.querySelector("#years"));
+			updateCountriesMenu();
+		});
+		
+		// Call the function updateGraph on change of the selected values
+		d3.selectAll("#years").on("change",function(){
+			updateCountriesMenu();
+		});
+		
+		
+		d3.selectAll("#countries").on("change",function(){
+			updateGraph();
+		});
+		
+		function updateCountriesMenu(){
+			// Get current year
+			year_instance._setSelectedStates();
+			var year = year_instance.getSelectedValues()[0];
+			// Load dataset
+			d3.csv("csv/smartworking_f.csv", d3.autoType).then(function (dataset) {
+				// Disable countries without data
+				var countries_available = Array.from(new Set(d3.map(dataset, function(d){ if(d.time == year) return d.geo; })));
+				d3.select("#countries").selectAll("option")
+					.attr("disabled", null)
+					.filter(function(){ return !countries_available.includes(d3.select(this).attr("value"))})
+					.attr("disabled", "true");
+				// Re-initialize instance
+				countries_instance = M.FormSelect.init(document.querySelector("#countries"));
+				// Deselect disabled options
+				var disabled_selected = d3.select(countries_instance.dropdownOptions)
+					.selectAll("li.disabled.selected")
+					.classed("disabled",false)
+					.dispatch("click")
+					.classed("disabled",true);
+				updateGraph();
+			});
+		}
+    </script>
+</body>
+
+</html>

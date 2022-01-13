@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <title>Group 7 - Final Project</title>
+	<!-- JS -->
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+	<!-- CSS -->
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
+	<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+
+<body>
+	
+	<nav class="blue darken-1">
+		<div class="nav-wrapper">
+			<a href="index.html" class="brand-logo">Group 7</a>
+			<a href="#" data-target="mobile-demo" class="sidenav-trigger"><i class="material-icons">menu</i></a>
+			<ul id="nav-mobile" class="right hide-on-med-and-down">
+				<li><a href="alluvial.html">Remote work</a></li>
+				<li><a href="linechart.html">Job starters and leavers</a></li>
+				<li><a href="barchart.html">Unemployment rates</a></li>
+			</ul>
+		</div>
+	</nav>
+	
+	<ul id="mobile-demo" class="sidenav">
+		<li><a href="alluvial.html">Remote work</a></li>
+		<li><a href="linechart.html">Job starters and leavers</a></li>
+		<li><a href="barchart.html">Unemployment rates</a></li>
+	</ul>
+       
+	<main class="main_background valign-wrapper">
+		<div class="row valign-wrapper">
+			<h1 class="col s12 m6 white-text">How Covid-19 affected the job market</h1>
+			<div class="col s12 m6 main_description">
+				<p>The purpose of this is project is to show how Covid-19 affected some of the aspects of the job market in Europe, 
+				by analyzing data from 2020 and before.</p>
+				<ul class="collection"> 
+					<li class="collection-item active">The aspects that we are interested in are:</li>
+					<li class="collection-item">Remote work or <i>“Smart working”</i> (employees working from home).</li>
+					<li class="collection-item">Job starters and leavers (who starter a new career or quitted a previous one).</li>
+					<li class="collection-item">Unemployment rates (with a particular focus on the relationship with the educational attainment level).</li>
+				</ul>
+				<p>All the data used on project are property of Eurostat, <a href="https://ec.europa.eu/eurostat/web/covid-19/data">Covid-19 section.</a></p>
+			</div>
+		</div>
+	</main>
+	<footer class="page-footer blue darken-1">
+		<div class="container">
+            <div class="row">
+				<div class="col s6">
+					<h5 class="white-text">Nicholas Gazzo 4498892</h5>
+				</div>
+				<div class="col s6">
+					<h5 class="white-text">Nazmul Hossain 4533278</h5>
+				</div>
+			</div>
+		</div>
+	</footer>
+	
+	<script type="text/javascript">
+		document.addEventListener('DOMContentLoaded', function() {
+			M.Sidenav.init(document.querySelectorAll(".sidenav"));
+		});
+	</script>
+</body>
+
+</html>

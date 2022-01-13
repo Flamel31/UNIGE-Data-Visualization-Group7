@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <title>Job starters and leavers</title>    
+	<!-- JS -->
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+	<script src="js/d3-sankey.min.js"></script>
+	<script src="js/utility.js"></script>
+	<!-- CSS -->
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
+	<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+
+<body>
+	<nav class="blue darken-1">
+		<div class="nav-wrapper">
+			<a href="index.html" class="brand-logo">Group 7</a>
+			<a href="#" data-target="mobile-demo" class="sidenav-trigger"><i class="material-icons">menu</i></a>
+			<ul id="nav-mobile" class="right hide-on-med-and-down">
+				<li><a href="alluvial.html">Remote work</a></li>
+				<li class="active"><a href="linechart.html">Job starters and leavers</a></li>
+				<li><a href="barchart.html">Unemployment rates</a></li>
+			</ul>
+		</div>
+	</nav>
+	
+	<ul id="mobile-demo" class="sidenav">
+		<li><a href="alluvial.html">Remote work</a></li>
+		<li><a href="linechart.html">Job starters and leavers</a></li>
+		<li><a href="barchart.html">Unemployment rates</a></li>
+	</ul>
+	<h2>Job starters and leavers</h2>
+
+	<main class="container" style="width:90%">
+		<div class="row">
+			<div class="input-field col s6">
+				<select id="dataset">
+					<option value=1 selected>Job starters</option>
+					<option value=2 >Job leavers</option>
+				</select>
+				<label>Choose a dataset</label>
+			</div>
+			<div class="input-field col s6">
+				<select id="gender">
+					<option value="T" selected>Total</option>
+					<option value="M" >Male</option>
+					<option value="F">Female</option>			
+
+				</select>
+				<label>Choose gender</label>
+			</div>
+		</div>
+		<div id="svgcontainer" class="row"></div>
+		<div class="row">
+			<div class="col s12">Source data: 
+				<a href=https://ec.europa.eu/eurostat/databrowser/bookmark/19d9c047-ae87-4cbf-8447-aea7a95319c2?lang=en">Eurostat link 1</a>,
+				<a href=https://ec.europa.eu/eurostat/databrowser/bookmark/32d97e48-6aea-4237-920d-cc21d946f609?lang=en">Eurostat link 2</a>
+			</div>
+		</div>
+	</main>
+    <script type="text/javascript">
+			var dataset_instance, gender_instance;
+			var current_data;
+			var country_perc = {};
+			var current_countries = [];
+			var all_countries = [];
+			var current_hovering = null;
+			// Map
+			var width = 500, height = 500;
+			// Linechart
+			const margin_2 = {top: 100, right: 40, bottom: 20, left: 40};
+			var width_2 = width - margin_2.left - margin_2.right, 
+				height_2 = height - margin_2.top - margin_2.bottom;
+
+			var tooltip, colorScale, colorSelection;
+			var mouseOver, mouseLeave, mouseClick, mouseMove;
+			// Materialize init of the select
+			document.addEventListener('DOMContentLoaded', function() {
+				M.Sidenav.init(document.querySelectorAll(".sidenav"));
+				var elems = document.querySelectorAll('select');
+				var instances = M.FormSelect.init(elems);
+				dataset_instance = instances[0];
+				gender_instance = instances[1];
+				main();
+			});
+
+			function drawMultipleCountryChart(){
+				//Calculate data
+				start_year = 2015
+				end_year = 2020
+				sex = gender_instance.getSelectedValues()
+				year_val = [];
+				max_y = 0;
+
+				all_countries.forEach(function(country, country_idx) { 
+					year_val.push( [] );
+					filtered = current_data.filter( function(d){
+					if(d["unit"] == "THS"  && d["sex"] == sex && d["geo"] == country) 
+						return d;
+					} )
+
+					for(i = start_year; i<= end_year; i++){
+						sum = 0;
+						curr_data = filtered.filter( function(d2){
+							if (d2["TIME_PERIOD"].startsWith(i)){ 
+								sum += parseFloat( d2["OBS_VALUE"] );
+								return d2;
+							}
+						} )
+						if(isNaN(sum)) sum = 0//year_val[country_idx].at(-1)[1]
+						year_val[country_idx].push( [new Date(i+"-01-01"),sum] )
+					}
+						
+						current_max = d3.max(year_val[country_idx], d => d[1])
+						if(current_max > max_y) max_y = current_max;				
+				})
+
+				//Set axis
+				svg2 = d3.select("#line")
+
+				const x = d3.scaleTime().domain([ new Date(start_year+"-01-01"), new Date(end_year+"-01-01")]).range([ 0, width_2]);
+
+				svg2.select(".axis-x")
+  					.call(d3.axisBottom( x ));
+
+				// Add Y axis
+				const y = d3.scaleLinear()
+					.domain([0, max_y])
+					.range([ height_2, 0 ])
+					.nice();
+
+				svg2.select(".axis-y")
+  					.call(d3.axisLeft(y));
+
+				svg2.select(".lines")
+					.selectAll("path")
+					.data(all_countries)
+					.join("path")
+					.attr("id", d => d)
+					.datum((d,i) => year_val[i])
+					.attr("fill", "none")
+					.attr("stroke", "lightgrey")
+					.attr("stroke-width", 1.5)
+					.attr("transform", `translate(${margin_2.left}, ${margin_2.top})`)
+					.attr("d", d3.line()
+						.x(function(d) { 
+							return x(d[0]) })
+						.y(function(d) { return y(d[1]) })
+					);
+			}
+
+			function updateLegend(){
+				var legend = svg2.select(".legend");
+				// Add one dot in the legend for each name.
+				legend.selectAll(".legendlines")
+					.data(current_countries)
+					.join("rect")					
+					.attr("class","legendlines")
+					.attr("x", width - margin_2.right - 70)
+					.attr("y", function(d,i){ return i*20 + 10})
+					.attr("width", 15)
+					.attr("height", 3)
+					.style("fill", function(d,i){ return color_list[i]})
+
+				// Add one dot in the legend for each name.
+				legend.selectAll(".legendlabels")
+					.data(current_countries)
+					.join("text")
+					.attr("class","legendlabels")
+					.attr("x", width - margin_2.right - 50)
+					.attr("y", function(d,i){ return i*20 + 18})					
+					.attr("text-anchor", "start")
+					//.style("fill", function(d,i){ return color_list[i]})
+					.text(function(d){ return toFullString.get(d)});
+			}
+
+			function highlight_graph(){
+				color_list = [d3.schemeSet1[0], d3.schemeSet1[1], d3.schemeSet1[2], d3.schemeSet1[3]]
+				draw_hover = current_hovering != null && !current_countries.includes( current_hovering ) && current_countries.length < 4;
+				if(draw_hover){
+					current_countries.push( current_hovering );
+				}
+
+				current_countries.forEach(function(country, i){
+					d3.selectAll("#"+country)
+					.attr("stroke", function(d){ return color_list[i]})
+					.attr("stroke-width", 3)
+					.raise();
+				})
+				updateLegend()
+				if(draw_hover){
+					current_countries.pop( );
+				}
+			}
+
+			function setMouseInteractions(){
+				tooltip = d3.select("#svgcontainer")
+					.append("div")
+					.style("display", "none")
+					.attr("class", "absolute")
+					.style("position", "absolute")
+					.style("background-color", "black")
+					.style("border", "solid")
+					.style("border-width", "2px")
+					.style("border-radius", "5px")
+					.style("padding", "5px");
+
+				mouseOver = function(d, i) {
+					current_hovering = i.properties["iso_a2"];
+					if(current_countries.length < 4 && country_perc[i.properties["iso_a2"]] > 0){
+						
+						d3.select(this)
+						.transition()
+						.duration(200)
+						.attr("fill", "green")
+						
+						highlight_graph();
+					}
+					tooltip.style("display", "block");
+				}
+					
+
+				mouseLeave = function(d, i) {
+					if(!current_countries.includes(current_hovering)){
+						d3.select(this)
+						.transition()
+						.duration(200)
+						.attr("fill",  function (d) {
+					
+							if(country_perc[i.properties["iso_a2"]] > 0){
+								return colorScale( Math.floor(country_perc[d.properties["iso_a2"]]/10) );
+							}
+							return "black"
+						})
+
+						//Remove highlight
+						d3.selectAll("#"+current_hovering)
+							.attr("stroke", "lightgrey")
+							.attr("stroke-width", 1.5)
+							.lower();
+					}
+
+					current_hovering = null;
+					updateLegend()
+					//console.log("Current hovering: ", current_hovering)					
+					tooltip.style("display", "none");					
+				}
+
+				mouseClick = function(d, i) {
+				
+					if(current_hovering != null){
+						//Already present, remove
+						if( current_countries.includes(current_hovering) ){
+							current_countries = current_countries.filter(function(value){ 
+								return value != current_hovering; 
+							});
+							d3.select("#"+current_hovering)
+								.attr("class", null)
+						}
+						//If not present add
+						else{
+							if(current_countries.length < 4){
+								current_countries.push(current_hovering);
+								d3.select("#"+current_hovering)
+								.attr("class", "highlight")
+							}
+						}
+
+					}
+				}
+
+				mouseMove = function(event,d) {
+					//console.log(country_perc[d.properties.iso_a2])
+					dataset_instance._setSelectedStates();
+					data_name = dataset_instance.getSelectedValues() == 1?"Job starters 2020<br>":"Job leavers 2020<br>";
+					val = "" + country_perc[d.properties.iso_a2].toFixed(2)+"%"
+					if(country_perc[d.properties.iso_a2] == 0) val = "No data available"
+					tooltip.html(data_name+d.properties.admin+" "+val)
+						.style("color", "white")
+						.style("top", (event.pageY)+10+"px")
+						.style("left",(event.pageX)+10+"px");
+				}
+			}
+
+			function drawGeoGraph(topo){
+				svg = d3.select("#geo")
+
+				// Map and projection
+				const projection = d3.geoMercator()
+					.center([180, 60])                // GPS of location to zoom on
+					.scale(360)                       // This is like the zoom
+					.translate([ 1300, 250 ])
+
+				dataset_instance._setSelectedStates();
+				current_color = dataset_instance.getSelectedValues() == 1?"blue":"red";
+				colorScale = d3.scaleLinear().domain([0,2]).range(["lightgrey", current_color])
+				colorSelection = d3.scaleLinear().domain([0,2]).range(["lightgrey", "green"])
+
+				// Tooltip for the histogram
+				filtered = current_data.filter( function(d){
+					if(d["unit"] == "PC_EMP" && d["sex"] == "T") 
+						return d;
+				} )
+
+				//Calculate percentage
+				topo.features.forEach(function(country, i){
+					//country_perc
+					sum = 0;
+					curr_data = filtered.filter( function(d2){
+						if (d2["TIME_PERIOD"].startsWith("2020") && d2["geo"] == country.properties["iso_a2"]){ 
+							sum += parseFloat( d2["OBS_VALUE"] );
+							return d2;
+						}
+					} )
+					country_perc[ country.properties["iso_a2"] ] = sum
+				})
+
+				// Draw the map
+				svg.selectAll("path")
+				.data(topo.features)
+				.join("path")
+				.attr("id", function(d){ return "c"+d.properties["iso_a2"]})
+				// draw each country
+				.attr("d", d3.geoPath()
+					.projection(projection)
+				)
+				// set the color of each country
+				.attr("fill", function (d) {
+					if(current_countries.includes(d.properties["iso_a2"])){ return "green";}
+					if(country_perc[d.properties["iso_a2"]] > 0){
+						all_countries.push(d.properties["iso_a2"]);
+						return colorScale( Math.floor(country_perc[d.properties["iso_a2"]]/10) );
+					}
+					return "black"
+				})
+				.style("stroke", "transparent")
+				.attr("class", function(d){ return "Country" } )
+				.style("opacity", .6)
+				.on("mouseover", mouseOver )
+				.on("mouseleave", mouseLeave )
+				.on("mousemove", mouseMove)
+				.on("click", mouseClick )
+				
+				var legend = svg.select(".legend")
+
+				//Legend
+				legend.selectAll(".legendlines")
+					.data([0, 1, 2, 3, 4])
+					.join("rect")					
+					.attr("class","legenddots")
+					.attr("style", "outline: thin solid black;")
+					.attr("x", function(d,i){ 
+						if(d == 3)return width-50-10;
+						if(d == 4)return width-50*2-10;
+						return i*50 + 10 
+					})
+					.attr("y", 10)
+					.attr("width", 50)
+					.attr("height", 10)
+					.style("fill", function(d){ 
+						if(d == 3)return "grey";
+						if(d == 4)return "green";
+						return colorScale(d);
+					})
+
+				// Add one dot in the legend for each name.
+				legend.selectAll(".legendlabels")
+					.data([0, 1, 2, 3, 4])
+					.join("text")
+					.attr("class","legendlabels")
+					.attr("x", function(d,i){ 
+						if(d == 3)return width-50-20;
+						if(d == 4)return width-10;
+						return i*50 +50 })
+					.attr("y", 40)					
+					.attr("text-anchor", "end")
+					.text(function(d){ 
+						if(d == 3)return "Select";
+						if(d == 4)return "No data";
+						return "> "+d*10+"%"}
+					);
+
+				drawMultipleCountryChart();
+			}
+
+
+
+			function main(){
+				dataset_instance._setSelectedStates();
+				dataset = dataset_instance.getSelectedValues();
+				gender_instance._setSelectedStates();
+				gender  = gender_instance.getSelectedValues();
+
+				//Create geo svg
+				const svg  = d3.select("#svgcontainer")
+					.append("div")					
+					.attr("class","col s12 m6")
+					.append("svg")
+					.attr("id", "geo")
+					.attr("viewBox", `0 0 ${width} ${height}`)
+					.style("border", '1px solid black')
+					.style("box-sizing", "content-box");
+				svg.append("g")
+					.attr("class", "legend");
+
+				setMouseInteractions();
+
+				//Create line chart svg
+				const svg2 = d3.select("#svgcontainer")
+					.append("div")					
+					.attr("class","col s12 m6")
+					.append("svg")
+					.attr("id", "line")
+					.attr("viewBox", `0 0 ${width_2 + margin_2.left + margin_2.right} ${height_2 + margin_2.top + margin_2.bottom}`);
+				// Append Lines,Axis,Legend and Labels space
+				svg2.append("g")
+					.attr("class","lines");
+				svg2.append("g")
+					.attr("transform", `translate(${margin_2.left}, ${height_2 + margin_2.top})`)
+					.attr("class", "axis-x");
+				svg2.append("g")
+					.attr("class", "axis-y")
+					.attr("transform", `translate(${margin_2.left}, ${margin_2.top})`);
+				svg2.append("g")
+					.attr("class", "legend");
+				svg2.append("g")
+					.attr("class","labels")
+					.append("text")
+					.attr("class", "x-label")
+					.attr("text-anchor", "end")
+					.attr("x", margin_2.left + 40)
+					.attr("y", margin_2.top - 10)
+					.text("Thousands");
+					
+				// Load external data and boot
+				Promise.all([
+				d3.json("json/europe.geo.json"),
+				d3.csv("csv/job_starters.csv"),
+				d3.csv("csv/job_leavers.csv")]).then(function(loadData){
+					let topo = loadData[0]
+					dataset_instance._setSelectedStates();
+					gender_instance._setSelectedStates();
+					current_data = loadData[ dataset_instance.getSelectedValues()];
+
+					//Geographic map
+					drawGeoGraph(topo);		
+
+					//Update map
+					d3.selectAll("#dataset").on("change",function(){
+						dataset_instance._setSelectedStates();
+						gender_instance._setSelectedStates();
+						current_data = loadData[ dataset_instance.getSelectedValues()];
+						drawGeoGraph(topo);
+						drawMultipleCountryChart()
+						highlight_graph()
+					});
+
+					//Update line chart
+					d3.selectAll("#gender").on("change",function(){
+						gender_instance._setSelectedStates();
+						drawMultipleCountryChart()
+						highlight_graph()
+					});
+				
+				})
+			}
+
+			
+
+
+    </script>
+</body>
+
+</html>

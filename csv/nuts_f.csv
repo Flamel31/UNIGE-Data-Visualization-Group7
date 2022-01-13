@@ -1,0 +1,141 @@
+code,name,NUTS_level,country_seq
+AT,Austria ,0,1
+AT1,East Austria,1,1
+AT2,South Austria,1,1
+AT3,West Austria,1,1
+BE,Belgium ,0,2
+BE1,Brussels Capital Region,1,2
+BE2,Flemish Region,1,2
+BE3,Walloon Region,1,2
+BG,Bulgaria ,0,3
+BG3,Northern and Eastern Bulgaria,1,3
+BG4,South-Western and South-Central Bulgaria,1,3
+CY,Cyprus ,0,4
+CY0,Cyprus,1,4
+CZ,Czech Republic ,0,5
+CZ0,Czech Republic,1,5
+DE,Germany ,0,6
+DE1,Baden-Wurttemberg,1,6
+DE2,Bavaria,1,6
+DE3,Berlin,1,6
+DE4,Brandenburg,1,6
+DE5,Free Hanseatic City of Bremen,1,6
+DE6,Hamburg,1,6
+DE7,Hessen,1,6
+DE8,Mecklenburg-Vorpommern,1,6
+DE9,Lower Saxony,1,6
+DEA,North Rhine-Westphalia,1,6
+DEB,Rhineland-Palatinate,1,6
+DEC,Saarland,1,6
+DED,Saxony,1,6
+DEE,Saxony-Anhalt,1,6
+DEF,Schleswig-Holstein,1,6
+DEG,Thuringia,1,6
+DK,Denmark ,0,7
+DK0,Denmark,1,7
+EE,Estonia ,0,8
+EE0,Estonia,1,8
+EL,Greece ,0,9
+EL3,Attica,1,9
+EL4,Nisia Aigaiou, Kriti,1,9
+EL5,Voreia Ellada,1,9
+EL6,Kentriki Ellada,1,9
+ES,Spain ,0,10
+ES1,North West,1,10
+ES2,North East,1,10
+ES3,Community of Madrid,1,10
+ES4,Centre,1,10
+ES5,East,1,10
+ES6,South,1,10
+ES7,Canary Islands,1,10
+FI,Finland ,0,11
+FI1,Mainland Finland,1,11
+FI2,Aland,1,11
+FR,France ,0,12
+FR1,Ile-de-France,1,12
+FRB,Centre-Val de Loire,1,12
+FRC,Bourgogne-Franche-Comte,1,12
+FRD,Normandy,1,12
+FRE,Hauts-de-France,1,12
+FRF,Grand-Est,1,12
+FRG,Pays de la Loire,1,12
+FRH,Brittany,1,12
+FRI,Nouvelle-Aquitaine,1,12
+FRJ,Occitanie,1,12
+FRK,Auvergne-Rhone-Alpes,1,12
+FRL,Provence-Alpes-Cote d'Azur,1,12
+FRM,Corsica,1,12
+FRA,Departements d'Outre Mer,1,12
+HR,Croatia ,0,13
+HR0,Croatia,1,13
+HU,Hungary ,0,14
+HU1,Central Hungary,1,14
+HU2,Transdanubia,1,14
+HU3,Great Plain and North,1,14
+IE,Ireland ,0,15
+IE0,Ireland,1,15
+IT,Italy ,0,16
+ITC,North West,1,16
+ITH,North East,1,16
+ITI,Centre,1,16
+ITF,South,1,16
+ITG,Islands,1,16
+LT,Lithuania ,0,17
+LT0,Lithuania,1,17
+LU,Luxembourg ,0,18
+LU0,Luxembourg,1,18
+LV,Latvia ,0,19
+LV0,Latvia,1,19
+MT,Malta ,0,20
+MT0,Malta,1,20
+NL,Netherlands ,0,21
+NL1,North Netherlands,1,21
+NL2,East Netherlands,1,21
+NL3,West Netherlands,1,21
+NL4,South Netherlands,1,21
+PL,Poland ,0,22
+PL2,South Macroregion,1,22
+PL4,North-west Macroregion,1,22
+PL5,South-west Macroregion,1,22
+PL6,North Macroregion,1,22
+PL7,Central Macroregion,1,22
+PL8,East Macroregion,1,22
+PL9,Masovian Macroregion,1,22
+PT,Portugal ,0,23
+PT1,Continental Portugal,1,23
+PT2,Azores,1,23
+PT3,Madeira,1,23
+RO,Romania ,0,24
+RO1,Macroregion One,1,24
+RO2,Macroregion Two,1,24
+RO3,Macroregion Three,1,24
+RO4,Macroregion Four,1,24
+SE,Sweden ,0,25
+SE1,East Sweden,1,25
+SE2,South Sweden,1,25
+SE3,North Sweden,1,25
+SI,Slovenia ,0,26
+SI0,Slovenia,1,26
+SK,Slovakia ,0,27
+SK0,Slovakia,1,27
+UK,United Kingdom ,0,28
+UKC,North East,1,28
+UKD,North West,1,28
+UKE,Yorkshire and the Humber,1,28
+UKF,East Midlands,1,28
+UKG,West Midlands,1,28
+UKH,East of England,1,28
+UKI,Greater London,1,28
+UKJ,South East,1,28
+UKK,South West,1,28
+UKL,Wales,1,28
+UKM,Scotland,1,28
+UKN,Northern Ireland,1,28
+CH,Switzerland ,0,29
+CH0,Switzerland,1,29
+IS,Iceland ,0,30
+IS0,Iceland,1,30
+LI,Liechtenstein ,0,31
+LI0,Liechtenstein,1,31
+NO,Norway ,0,32
+NO0,Norway,1,32

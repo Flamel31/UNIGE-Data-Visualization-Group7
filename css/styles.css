@@ -1,0 +1,75 @@
+/*CSS file*/
+
+@import url('https://fonts.googleapis.com/css?family=Fira+Sans|Roboto+Slab');
+
+body{
+	font-family: Roboto Slab;
+	display: flex;
+    min-height: 100vh;
+    flex-direction: column;
+}
+
+h1,
+h2,
+h3 {
+  font-family: Fira Sans;
+}
+
+h1,
+h2 {
+  text-align: center;
+}
+
+main {
+	flex: 1 0 auto;
+}
+
+.tooltip{
+	display:none;
+	position:absolute;
+	background-color:white;
+	border:solid;
+	border-width:3px;
+	border-radius:5px;
+	padding:5px;
+}
+
+.nav-wrapper{
+	margin-left: 10px;
+}
+
+/* Index HTML */
+
+.main_background{
+	background-image: url('../img/background.jpg');
+	background-size:cover;
+	background-repeat: no-repeat;
+	background-attachment: fixed;
+	padding: 0px 15px;	
+}
+
+.main_description{
+	background:rgba(255,255,255,0.8);
+	border-radius: 10px;
+	padding: 1px 10px;	
+}
+
+.valign-wrapper {
+	flex-wrap: wrap;
+}
+
+/* Sankey Graph*/
+.sankey .node rect {
+  fill-opacity: .9;
+  shape-rendering: crispEdges;
+}
+
+.sankey .node text {
+  pointer-events: none;
+  text-shadow: 0 1px 0 #fff;
+}
+
+.sankey .link {
+  fill: none;
+  stroke-opacity: .6;
+}

@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <title>Unemployment rates</title>    
+	<!-- JS -->
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+	<script src="js/d3-sankey.min.js"></script>
+	<script src="js/utility.js"></script>
+	<!-- CSS -->
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
+	<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+
+<body>
+	<nav class="blue darken-1">
+		<div class="nav-wrapper">
+			<a href="index.html" class="brand-logo">Group 7</a>
+			<a href="#" data-target="mobile-demo" class="sidenav-trigger"><i class="material-icons">menu</i></a>
+			<ul id="nav-mobile" class="right hide-on-med-and-down">
+				<li><a href="alluvial.html">Remote work</a></li>
+				<li><a href="linechart.html">Job starters and leavers</a></li>
+				<li class="active"><a href="barchart.html">Unemployment rates</a></li>
+			</ul>
+		</div>
+	</nav>
+	
+	<ul id="mobile-demo" class="sidenav">
+		<li><a href="alluvial.html">Remote work</a></li>
+		<li><a href="linechart.html">Job starters and leavers</a></li>
+		<li><a href="barchart.html">Unemployment rates</a></li>
+	</ul>
+	<h2>Unemployment rates from 2018 to 2020</h2>
+	<main class="container">
+		<div class="row">
+			<div class="input-field col s12 m6">
+				<select id="education_levels">
+					<option value="TOTAL">All Levels</option>
+					<option value="ED0-2">Less than primary, primary and lower secondary education</option>
+					<option value="ED3-4">Upper secondary and post-secondary non-tertiary education</option>
+					<option value="ED5-8">Tertiary education</option>
+				</select>
+				<label>Choose educational attainment level</label>
+			</div>
+			<div class="input-field col s12 m6">
+				<select multiple id="countries">
+					<option value="AT">AT</option>
+					<option value="BE">BE</option>
+					<option value="BG">BG</option>
+					<option value="CH">CH</option>
+					<option value="CY">CY</option>
+					<option value="CZ">CZ</option>
+					<option value="DE" selected>DE</option>
+					<option value="DK">DK</option>
+					<option value="EE">EE</option>
+					<option value="EL">EL</option>
+					<option value="ES" selected>ES</option>
+					<option value="FI">FI</option>
+					<option value="FR" selected>FR</option>
+					<option value="HR">HR</option>
+					<option value="HU">HU</option>
+					<option value="IE">IE</option>
+					<option value="IS">IS</option>
+					<option value="IT" selected>IT</option>
+					<option value="LT">LT</option>
+					<option value="LU">LU</option>
+					<option value="LV">LV</option>
+					<option value="ME">ME</option>
+					<option value="MK">MK</option>
+					<option value="MT">MT</option>
+					<option value="NL">NL</option>
+					<option value="NO">NO</option>
+					<option value="PL">PL</option>
+					<option value="PT">PT</option>
+					<option value="RO">RO</option>
+					<option value="RS">RS</option>
+					<option value="SE">SE</option>
+					<option value="SI">SI</option>
+					<option value="SK">SK</option>
+					<option value="TR">TR</option>
+					<option value="UK">UK</option>
+				</select>
+				<label>Choose countries</label>
+			</div>
+			<div class="col s12" id="svgcontainer"></div>
+		</div>
+		<div class="row">
+			<div class="col s12">Source data: <a href="https://ec.europa.eu/eurostat/databrowser/bookmark/7e1a8a2d-8ab5-4063-b057-7ae85bf0c648?lang=en">Eurostat link</a></div>
+		</div>
+	</main>
+    <script type="text/javascript">
+		// svg width and height
+        var w = 800, h = 400;
+        // set the dimensions with respect to the margins of the graph
+        var margin = { top: 10, right: 10, bottom: 60, left: 20 };
+        var width = w - margin.left - margin.right, height = h - margin.top - margin.bottom;
+		// materialize instances for selectors
+		var education_levels_instance, countries_instance;
+		
+		// append the svg object to the body of the page
+        var svg = d3.select("#svgcontainer")
+            .append("svg")
+			.attr("width","100%")
+            .attr("viewBox", `0 0 ${w} ${h}`)
+            .append("g")
+            .attr("transform", `translate(${margin.left},${margin.top})`)
+		svg.append("g")
+			.attr("class", "axis-x");
+		svg.append("g")
+			.attr("class", "axis-y");
+		svg.append("g")
+			.attr("class", "legend");
+			
+		function updateGraph(){
+			education_levels_instance._setSelectedStates();
+			var education_level = education_levels_instance.getSelectedValues()[0];
+			var countries = countries_instance.getSelectedValues();
+			var years = [2018, 2019, 2020];
+			if(countries.length == 1){
+				// Using NUTS (Nomenclature of territorial units for statistics) level 0 and 1
+				d3.csv("csv/nuts_f.csv", d3.autoType).then(function (dataset) {
+					var data = d3.filter(dataset, function(d){
+						if(d.code == countries[0])
+							return d;
+					});
+					// If we found something
+					if(data.length > 0){
+						var regions = d3.map(d3.filter(dataset, function(d){
+							if(d.country_seq == data[0].country_seq && d.NUTS_level == 1)
+								return d;
+						}), d => d.code);
+						drawGraph(education_level, regions, years, countries[0]);
+					}else{
+						drawGraph(education_level, countries, years);
+					}
+				});
+			}else{
+				drawGraph(education_level, countries, years);
+			}
+		}
+
+        function drawGraph(education_level, groups, subgroups, supergroup) {
+			if(groups.length == 0){
+				svg.select("g.axis-x").selectChildren().remove()
+				svg.select("g.axis-y").selectChildren().remove()
+				svg.select("g.legend").selectChildren().remove()
+				svg.selectAll("g.groups").selectChildren().remove()
+				svg.select("g.legend")
+					.append("text")
+					.text("There is no bug here! Please select a country to visualize the graph.")
+					.attr("text-anchor","middle")
+					.attr("x", width/2)
+					.attr("y", height/4);
+				return;
+			}
+			// Request the file
+            d3.csv("csv/unemployment_f.csv", d3.autoType).then(function (dataset) {
+				// Filter the datasets, keep only the selected countries,subgroups and education level
+                var data = d3.filter(dataset, function (d) { 
+					if(d.edu == education_level && subgroups.includes(d.time) && groups.includes(d.geo))
+						return d; 
+				});
+				// Keep only the groups with at least one row
+				groups = new Set(d3.map(data, d => d.geo));
+				
+				// Add X axis (using groups = countries) 
+				var x = d3.scaleBand()
+					.domain(groups)
+					.range([0, width])
+					.padding([0.2]);
+				svg.select("g.axis-x")
+					.attr("transform", `translate(0, ${height})`)
+					.call(d3.axisBottom(x)
+						.tickSize(0)
+						.tickPadding(6)
+						.tickFormat(d => toFullString.get(d)));
+				
+				if(groups.size >= 10){
+					svg.select("g.axis-x").selectAll("text")
+						.attr("transform", "rotate(-45)")
+						.style("text-anchor", "end");
+				}
+						
+				var maxValue = d3.max(data, d => d.value);
+				  // Add Y axis
+				var y = d3.scaleLinear()
+					.domain([0,  maxValue <= 40 ? 40 : maxValue])
+					.range([ height, 0 ])
+					.nice();
+				svg.select("g.axis-y")
+					.call(d3.axisLeft(y));
+				
+				// Using another scaleBand (for the subgroups = subgroups)
+				var xSub = d3.scaleBand()
+					.domain(subgroups)
+					.range([0, x.bandwidth()])
+					.padding([0.05]);
+				// Color for the subgroups
+				var color = d3.scaleOrdinal()
+					.domain(subgroups)
+					.range(d3.schemeSet1);
+				
+				// Manage Groups
+				var g_groups = svg.selectAll("g.groups")
+					// Enter in data = loop group per group
+					.data(groups)
+					.join("g")
+					.attr("class","groups")
+					.attr("transform", d => `translate(${x(d)}, 0)`);
+					
+				// Manage bars
+				var rects = g_groups.selectAll("rect")
+					.data(function(d) { 
+						return d3.filter(data, function(g){ if(g.geo == d) return g;});
+					})
+					.join("rect")
+					.attr("y", height)
+					.attr("height", 0)
+					.attr("x", d => xSub(d.time))					
+					.attr("width", xSub.bandwidth())
+					.attr("fill", d => color(d.time))
+					// Show percentage as a tooltip (if there are more than 10 groups)
+					.on("mouseover", function(event,d) {
+						if(groups.size >= 10){
+							tooltip.html("<b>" + d.time + "</b><br>" + toFullString.get(d.geo) + " : " + d.value + "%")
+							tooltip.style("display", "block");
+						}
+					})
+					.on("mousemove", function(event) {
+						if(tooltip.style("display") == "block"){
+							tooltip.style("top", (event.pageY+10)+"px")
+								.style("left",(event.pageX+10)+"px");
+						}
+					})
+					.on("mouseleave", function() {
+						if(groups.size >= 10){
+							tooltip.style("display", "none");
+						}
+					});
+				if(groups.size < 10){
+					// Show percentage over the bars
+					g_groups.selectAll("text")
+						.data(function(d) { 
+							return d3.filter(data, function(g){ if(g.geo == d) return g;});
+						})
+						.join("text")
+						.attr("x", d => xSub(d.time) + xSub.bandwidth()/2)
+						.attr("y", d => y(d.value) - 6)
+						.attr("text-anchor","middle")
+						.text("")
+						.transition()
+						.ease(d3.easeLinear)
+						.delay((d,i) => 500 + 150 * i)
+						.text( d => d.value + "%");
+				}else{
+					g_groups.selectAll("text")
+						.remove();
+				}
+				
+				// Transition bars
+				rects.transition()
+					.ease(d3.easeLinear)
+					.duration(500)
+					.delay((d,i) => 150 * i)
+					.attr("y", d => y(d.value))
+					.attr("height", d => height - y(d.value));
+					
+				var legend = svg.select("g.legend");
+				// Add one dot in the legend for each name.
+				legend.selectAll("circle")
+					.data(subgroups)
+					.join("circle")					
+					.attr("cx", width-45)
+					.attr("cy", (d,i) => 5+i*25)
+					.attr("r", 7)
+					.style("fill", d => color(d));
+
+				// Add one dot in the legend for each name.
+				legend.selectAll("text")
+					.data(subgroups)
+					.join("text")
+					.attr("x", width-30)
+					.attr("y", (d,i) => 5 + 5+i*25)					
+					.attr("text-anchor", "start")
+					.style("fill", d => color(d))
+					.text(d => d);
+					
+				if(supergroup !== undefined){
+					legend.append("text")
+						.attr("x", 10)
+						.attr("y", 20)
+						.attr("text-anchor", "start")
+						.attr("font-size","20px")
+						.text(toFullString.get(supergroup));
+				}
+            });
+        }
+		
+		// Materialize init of the select
+		document.addEventListener('DOMContentLoaded', function() {
+			M.Sidenav.init(document.querySelectorAll(".sidenav"));
+			// Change country 2 characters string with full length string
+			d3.select("#countries").selectAll("option").html(function(){ return toFullString.get(d3.select(this).attr("value"))});
+			// Init select for years
+			var instances = M.FormSelect.init(document.querySelectorAll("select"));
+			education_levels_instance = instances[0];
+			countries_instance = instances[1];
+			updateGraph();
+		});
+		
+		d3.selectAll("select").on("change",function(){
+			updateGraph();
+		});
+		
+		// Tooltip for the links
+		var tooltip = d3.select("#svgcontainer")
+			.append("div")
+			.attr("class", "tooltip");
+    </script>
+</body>
+
+</html>
